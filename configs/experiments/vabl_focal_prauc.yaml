@@ -1,0 +1,9 @@
+# Next bounded candidate: keep the best focal recipe, change only checkpoint selection.
+# Motivation: focal seed0 had strong test F1, but validation F1 did not generalize;
+# PR-AUC may select a more stable ranking checkpoint under class imbalance.
+base: vabl_focal.yaml
+seed: 42
+
+train:
+  monitor: pr_auc
+  out_dir: outputs/Vabl_focal_prauc

@@ -1,0 +1,8 @@
+# F1PUSH_v4_detau — same soft FT as v3 but τ maximizes De-class F1 (val only).
+# Hypothesis: macro-F1 τ under-serves minority De (test De F1 0.62 under v2).
+# Run after v3_soft (or as ablated eval of v3 best.pt with criterion override).
+base: dd_f1_push_v3_soft.yaml
+
+train:
+  threshold_criterion: f1_de
+  out_dir: outputs/htp_depression_dd_soe_fbanet_f1push_v4_detau

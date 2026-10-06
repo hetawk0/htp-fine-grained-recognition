@@ -1,0 +1,8 @@
+# Vabl_focal — D3 soft focal (γ=0.5) under the honest D27 protocol.
+# D3's 0.763 used ImageNet norm and a LONG resume, so it is not a comparable
+# test F1@τ. One lever on the D27 recipe. Not an ensemble.
+base: d27_resnet50_ddnorm.yaml
+
+train:
+  focal_gamma: 0.5
+  out_dir: outputs/Vabl_focal

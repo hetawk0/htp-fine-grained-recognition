@@ -1,0 +1,53 @@
+# Topic A — HTP Depression Drawings (canonical: htp_depression_dd)
+# Filesystem root: datasets/raw/htp_depression_dd (real dir only; no DD/ symlink)
+base: default.yaml
+
+seed: 42
+
+data:
+  name: htp_depression_dd          # alias of dd; also accepts: dd, depression_drawings
+  display_name: HTP-Depression-DD  # paper-facing label in logs
+  root: datasets/raw/htp_depression_dd
+  image_size: 512                  # NOT 224 — DD is 4676×3308; see docs/doc.md resolution policy
+  invert: false
+  augment: true
+  contrast_stretch: true           # faint ink on near-white canvases
+  include_augmented: false         # hospital De augs leak across splits
+  parse_filename_labels: true      # Nor/De in filename — never trust folder 0/1
+  forbid_class_dirs: true
+  stratified: true
+  split_file: datasets/splits/htp_depression_dd_seed42.json
+  split_ratios: [0.7, 0.15, 0.15]
+  mean: [0.485, 0.456, 0.406]
+  std: [0.229, 0.224, 0.225]
+
+model:
+  name: soe_fbanet
+  num_classes: 2
+  backbone: cnn_lite
+  pretrained: false
+  use_sofe: true
+  use_sosm: true
+  use_wff: true
+  use_bilevel_attention: true
+  use_small_object_branch: true
+  multi_scale_sofe: true
+  so_weight: 1.5
+  learnable_fusion: true
+  semantic_dim: 64
+  dropout: 0.3
+
+train:
+  epochs: 12                       # controlled first lab run (not days-long)
+  batch_size: 8                    # 512² memory budget
+  lr: 1.0e-4
+  weight_decay: 1.0e-3
+  so_penalty: 2.0
+  label_smoothing: 0.0
+  # Inverse-frequency N/(2n_c) for Nor:De ≈ 1239:352 (full DD after dedup)
+  class_weights: [0.6421, 2.2599]
+  class_balanced_sampler: true
+  num_workers: 4
+  device: auto
+  out_dir: outputs/htp_depression_dd_soe_fbanet_full
+  log_every: 5

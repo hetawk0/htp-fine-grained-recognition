@@ -1,0 +1,11 @@
+base: ../dd_train.yaml
+
+model:
+  use_sofe: false
+  use_sosm: false
+  use_wff: false
+  use_small_object_branch: false
+  name: fbanet
+
+train:
+  out_dir: outputs/ablation_htp_dd_baseline_fbanet

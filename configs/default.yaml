@@ -1,0 +1,47 @@
+# Default SOE-FBANet training config (synthetic smoke / clinical-ready knobs)
+seed: 42
+
+data:
+  name: synthetic          # synthetic | quickdraw | htp_depression_dd (alias: dd) | zhang | pan | bilgi
+  image_size: 224          # Topic A DD train uses 512 — see configs/dd_train.yaml
+  invert: false            # true for QuickDraw → HTP stroke polarity
+  augment: true
+  contrast_stretch: false
+  num_samples: 128         # synthetic only
+  small_object_ratio: 0.5
+  samples_per_class: 200   # quickdraw only
+  binary: true             # quickdraw: map to binary depression proxy
+  split_ratios: [0.7, 0.15, 0.15]
+  # root: datasets/raw/htp_depression_dd   # when data.name: htp_depression_dd
+  mean: [0.485, 0.456, 0.406]
+  std: [0.229, 0.224, 0.225]
+
+model:
+  name: soe_fbanet         # soanet | soe_fbanet | fbanet
+  num_classes: 2
+  backbone: cnn_lite       # cnn_lite | resnet18 | vgg16
+  pretrained: false
+  in_channels: 3
+  # --- ablation flags (meddef-style toggles) ---
+  use_sofe: true
+  use_sosm: true
+  use_wff: true
+  use_bilevel_attention: true
+  use_small_object_branch: true
+  multi_scale_sofe: true
+  so_weight: 1.5
+  learnable_fusion: true
+  semantic_dim: 64
+  dropout: 0.3
+
+train:
+  epochs: 5
+  batch_size: 16
+  lr: 1.0e-4
+  weight_decay: 1.0e-3
+  so_penalty: 2.0
+  label_smoothing: 0.0
+  num_workers: 0
+  device: auto             # auto | cpu | cuda | mps
+  out_dir: outputs/default
+  log_every: 10

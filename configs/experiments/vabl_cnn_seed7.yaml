@@ -1,0 +1,8 @@
+# Vabl_cnn_seed7 — the named d26_long_seed7 arm never produced a test.
+# D26's id was reused for ResNet18. This is one seed (7) on the D21 cnn_lite
+# DD-norm recipe, not ten copies and not a D30 clone.
+# Honest protocol is already in the base config (DD mean/std, seed42 split, τ on val).
+base: d26_long_seed7.yaml
+
+train:
+  out_dir: outputs/Vabl_cnn_seed7

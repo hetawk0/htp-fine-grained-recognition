@@ -1,0 +1,7 @@
+# Vabl_wd — D10 weight decay 3e-3 under the honest D27 protocol.
+# D10's 0.770 was forever-freeze on ImageNet-norm D1. One lever on D27.
+base: d27_resnet50_ddnorm.yaml
+
+train:
+  weight_decay: 3.0e-3
+  out_dir: outputs/Vabl_wd

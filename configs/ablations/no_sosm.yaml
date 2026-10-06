@@ -1,0 +1,7 @@
+base: ../dd_train.yaml
+
+model:
+  use_sosm: false
+
+train:
+  out_dir: outputs/ablation_htp_dd_no_sosm

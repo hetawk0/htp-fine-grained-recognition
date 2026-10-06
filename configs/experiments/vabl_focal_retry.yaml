@@ -1,0 +1,7 @@
+# Retry of the best completed Viola focal recipe in a separate output directory.
+# Keeps the validated D27/DD-norm protocol and only isolates the run output.
+base: vabl_focal.yaml
+seed: 42
+
+train:
+  out_dir: outputs/Vabl_focal_retry

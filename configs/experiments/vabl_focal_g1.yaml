@@ -1,0 +1,8 @@
+# Controlled follow-up to Vabl_focal: test stronger hard-example emphasis.
+# Keeps the seed, data, threshold selection, model, and schedule unchanged.
+base: vabl_focal.yaml
+seed: 42
+
+train:
+  focal_gamma: 1.0
+  out_dir: outputs/Vabl_focal_g1

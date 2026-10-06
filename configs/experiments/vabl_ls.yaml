@@ -1,0 +1,8 @@
+# Vabl_ls — D8 label smoothing 0.10 under the honest D27 protocol.
+# D8's 0.763 was forever-freeze on ImageNet-norm D1. One lever on D27
+# (D27 lr stays 1e-4; this is not a second D30).
+base: d27_resnet50_ddnorm.yaml
+
+train:
+  label_smoothing: 0.10
+  out_dir: outputs/Vabl_ls

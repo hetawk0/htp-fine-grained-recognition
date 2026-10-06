@@ -1,0 +1,8 @@
+# Viola HTP — core training stack
+torch>=2.0
+torchvision>=0.15
+numpy>=1.24
+Pillow>=9.0
+PyYAML>=6.0
+tqdm>=4.65
+scikit-learn>=1.2

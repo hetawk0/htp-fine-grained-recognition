@@ -1,0 +1,9 @@
+base: default.yaml
+
+model:
+  name: soanet
+  multi_scale_sofe: false
+  use_bilevel_attention: false
+
+train:
+  out_dir: outputs/soanet

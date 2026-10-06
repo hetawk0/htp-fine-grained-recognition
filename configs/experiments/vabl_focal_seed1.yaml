@@ -1,0 +1,6 @@
+# Repeat the best completed Vabl_focal recipe with a new seed and output path.
+base: vabl_focal.yaml
+seed: 1
+
+train:
+  out_dir: outputs/Vabl_focal_seed1

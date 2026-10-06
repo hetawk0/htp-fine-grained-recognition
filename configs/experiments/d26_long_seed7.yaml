@@ -1,0 +1,45 @@
+# D26 — LONG_DDNORM multi-seed (seed=7). NOT a D21-clone knob tweak.
+# D25 early-close hurt (test 0.754). D22–D24 FT/EMA/unfreeze exhausted.
+# Path: seed diversity → later logit-avg with D21 (seed=42). Goal: beat 0.778
+# alone or as ensemble member. Soft/close schedule = D21 (do not re-use D25).
+base: ../dd_train.yaml
+
+seed: 7
+
+data:
+  strong_aug: false
+  include_augmented: false
+  contrast_stretch: true
+  mean: [0.9817, 0.9817, 0.9817]
+  std: [0.0828, 0.0828, 0.0828]
+
+model:
+  dropout: 0.3
+
+train:
+  epochs: 120
+  freeze_epochs: 0
+  backbone_lr_mult: 1.0
+  lr: 1.0e-4
+  weight_decay: 1.0e-3
+  lr_schedule: cosine
+  lr_min: 1.0e-6
+  warmup_epochs: 3.0
+  monitor: f1_tau
+  patience: 25
+  threshold_criterion: f1
+  class_weights: [0.6421, 2.2599]
+  class_balanced_sampler: true
+  sampler_de_boost: 1.0
+  focal_gamma: 0.0
+  dice_weight: 0.0
+  label_smoothing: 0.0
+  tta_hflip: true
+  so_penalty: 2.0
+  batch_size: 8
+  amp: false
+  grad_clip_norm: 0.0
+  close_train_aug_epochs: 15
+  soft_aug_epochs: 0
+  out_dir: outputs/htp_depression_dd_exp_d26_long_seed7
+  log_every: 5

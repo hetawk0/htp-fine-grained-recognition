@@ -1,0 +1,37 @@
+# D14 PROGRESSIVE_LONG — same staged recipe from LONG best (compare vs D13)
+# Same anti-ep1-stall schedule as D13; init = foundation LONG ep64 (not D1 head).
+# Success = best epoch ≥ 10 AND progressive val f1_tau gains.
+base: ../dd_train.yaml
+
+seed: 42
+
+data:
+  strong_aug: false
+  include_augmented: false
+
+model:
+  dropout: 0.3
+
+train:
+  resume: outputs/htp_depression_dd_init/best_long_ep64.pt
+  epochs: 100
+  freeze_epochs: 12
+  backbone_lr_mult: 0.05       # bb LR = 5e-7 after unfreeze
+  lr: 1.0e-5
+  weight_decay: 1.0e-3
+  lr_schedule: cosine
+  lr_min: 1.0e-8
+  monitor: f1_tau
+  patience: 45
+  threshold_criterion: f1
+  class_weights: [0.6421, 2.2599]
+  class_balanced_sampler: true
+  sampler_de_boost: 1.0
+  focal_gamma: 0.0
+  dice_weight: 0.0
+  label_smoothing: 0.05
+  tta_hflip: true
+  so_penalty: 2.0
+  batch_size: 8
+  out_dir: outputs/htp_depression_dd_exp_d14_progressive_long
+  log_every: 5

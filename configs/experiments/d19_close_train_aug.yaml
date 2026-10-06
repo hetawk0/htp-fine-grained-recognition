@@ -1,0 +1,42 @@
+# D19 CLOSE_TRAIN_AUG — Ultralytics close_mosaic for mild sketch aug
+# Mild crop/flip/rot for first soft_aug_epochs, then eval-like Resize only.
+# Distinct from continuous strong_aug (hurt) and from close_strong_aug (no-op when
+# strong_aug=false). Isolates train→val distribution alignment under D1 freeze.
+base: ../dd_train.yaml
+
+seed: 42
+
+data:
+  strong_aug: false
+  include_augmented: false
+
+model:
+  dropout: 0.3
+
+train:
+  resume: outputs/htp_depression_dd_exp_d1_head_micro/best.pt
+  epochs: 50
+  freeze_epochs: 999
+  backbone_lr_mult: 0.0
+  lr: 5.0e-6
+  weight_decay: 1.0e-3
+  lr_schedule: cosine
+  lr_min: 1.0e-8
+  monitor: f1_tau
+  patience: 15
+  threshold_criterion: f1
+  class_weights: [0.6421, 2.2599]
+  class_balanced_sampler: true
+  sampler_de_boost: 1.0
+  focal_gamma: 0.0
+  dice_weight: 0.0
+  label_smoothing: 0.05
+  tta_hflip: true
+  so_penalty: 2.0
+  batch_size: 8
+  # PRIMARY: close mild train aug after epoch 8 (while patience still alive)
+  soft_aug_epochs: 8
+  amp: false
+  grad_clip_norm: 0.0
+  out_dir: outputs/htp_depression_dd_exp_d19_close_train_aug
+  log_every: 5

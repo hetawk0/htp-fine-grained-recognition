@@ -1,0 +1,10 @@
+# F1PUSH_v5 stage B — DD soft FT from QuickDraw sketch pretrain (partial load).
+# Prerequisite: outputs/quickdraw_htp_pretrain/best.pt from qd_htp_pretrain.yaml
+base: dd_f1_push_v3_soft.yaml
+
+train:
+  resume: outputs/quickdraw_htp_pretrain/best.pt
+  resume_strict: false          # skip 3-class fc; keep backbone/SOFE
+  freeze_epochs: 8
+  lr: 1.5e-5
+  out_dir: outputs/htp_depression_dd_soe_fbanet_f1push_v5_qdft

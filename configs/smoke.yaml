@@ -1,0 +1,16 @@
+base: default.yaml
+
+data:
+  name: synthetic
+  num_samples: 48
+  augment: false
+
+model:
+  name: soe_fbanet
+  backbone: cnn_lite
+
+train:
+  epochs: 1
+  batch_size: 8
+  lr: 1.0e-3
+  out_dir: outputs/smoke

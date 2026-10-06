@@ -1,0 +1,51 @@
+# D23 MILD_UNFREEZE_D21 — not forever-freeze (D22 path exhausted if null)
+# From D21 DD-norm weights: short head warmup → mild backbone LR, moderate patience.
+# Differs from hurt D13 (ImageNet D1, pat45, bb_mult 0.05): DD-norm init, pat15, bb 0.1.
+#
+# Single coherent package (do not stack EMA / sampler / AMP / LDAM):
+#   - resume D21 best.pt + same mean/std
+#   - freeze_epochs=15, backbone_lr_mult=0.1, lr=1e-5, patience=15
+#   - soft close_aug fires while ES alive (soft_aug_epochs=20)
+#   - tta hflip (hvflip is post-hoc / separate lever)
+base: ../dd_train.yaml
+
+seed: 42
+
+data:
+  strong_aug: false
+  include_augmented: false
+  contrast_stretch: true
+  mean: [0.9817, 0.9817, 0.9817]
+  std: [0.0828, 0.0828, 0.0828]
+
+model:
+  dropout: 0.3
+
+train:
+  resume: outputs/htp_depression_dd_exp_d21_long_ddnorm/best.pt
+  epochs: 60
+  freeze_epochs: 15
+  backbone_lr_mult: 0.1
+  lr: 1.0e-5
+  weight_decay: 1.0e-3
+  lr_schedule: cosine
+  lr_min: 1.0e-8
+  warmup_epochs: 0
+  monitor: f1_tau
+  patience: 15
+  threshold_criterion: f1
+  class_weights: [0.6421, 2.2599]
+  class_balanced_sampler: true
+  sampler_de_boost: 1.0
+  focal_gamma: 0.0
+  dice_weight: 0.0
+  label_smoothing: 0.05
+  tta_hflip: true
+  so_penalty: 2.0
+  batch_size: 8
+  amp: false
+  grad_clip_norm: 0.0
+  # Aug ON for first 20 ep (covers head freeze + early unfreeze); then eval-like
+  soft_aug_epochs: 20
+  out_dir: outputs/htp_depression_dd_exp_d23_mild_unfreeze_d21
+  log_every: 5

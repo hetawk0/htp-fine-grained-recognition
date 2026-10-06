@@ -1,0 +1,38 @@
+# D7 DE_CLEAN — De focus from D1 without strong_aug (D2 failure mode removed)
+# Hypothesis: D2's val De@τ 0.774 didn't transfer because strong_aug + f1_de
+# selection overfit. Keep D1's freeze+no-aug; mild De oversample only.
+base: ../dd_train.yaml
+
+seed: 42
+
+data:
+  strong_aug: false
+  include_augmented: false
+
+model:
+  dropout: 0.3
+
+train:
+  resume: outputs/htp_depression_dd_exp_d1_head_micro/best.pt
+  epochs: 40
+  freeze_epochs: 999
+  backbone_lr_mult: 0.0
+  lr: 3.0e-6
+  weight_decay: 1.0e-3
+  lr_schedule: cosine
+  lr_min: 1.0e-8
+  monitor: f1_tau
+  patience: 18
+  threshold_criterion: f1
+  class_weights: [0.70, 2.00]
+  class_balanced_sampler: true
+  sampler_de_boost: 1.25
+  sampler_num_samples: 1280
+  focal_gamma: 0.0
+  dice_weight: 0.05
+  label_smoothing: 0.03
+  tta_hflip: true
+  so_penalty: 2.0
+  batch_size: 8
+  out_dir: outputs/htp_depression_dd_exp_d7_de_clean
+  log_every: 5

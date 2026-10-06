@@ -1,0 +1,7 @@
+# Vabl_cw — D9 class weights [0.55, 2.55] under the honest D27 protocol.
+# D9's 0.770 was forever-freeze on ImageNet-norm D1. One lever on D27.
+base: d27_resnet50_ddnorm.yaml
+
+train:
+  class_weights: [0.55, 2.55]
+  out_dir: outputs/Vabl_cw

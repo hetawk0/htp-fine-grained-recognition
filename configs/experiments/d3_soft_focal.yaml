@@ -1,0 +1,37 @@
+# D3 SOFT_FOCAL — calibrated mild focal (γ=0.5) after v1 γ=1.5 + CW soften hurt
+# Hypothesis: v1 failed from stacking focal+soft-CW+de_boost; try γ alone with
+# LONG CW kept and long freeze. Launch only if D1/D2 stall below ~0.80 test F1@τ.
+base: ../dd_train.yaml
+
+seed: 42
+
+data:
+  strong_aug: false
+  include_augmented: false
+
+model:
+  dropout: 0.3
+
+train:
+  resume: outputs/htp_depression_dd_init/best_long_ep64.pt
+  epochs: 50
+  freeze_epochs: 25
+  backbone_lr_mult: 0.1
+  lr: 8.0e-6
+  weight_decay: 1.0e-3
+  lr_schedule: cosine
+  lr_min: 1.0e-7
+  monitor: f1_tau
+  patience: 20
+  threshold_criterion: f1
+  class_weights: [0.6421, 2.2599]
+  class_balanced_sampler: true
+  sampler_de_boost: 1.0
+  focal_gamma: 0.5           # calibrated vs v1 1.5
+  dice_weight: 0.0
+  label_smoothing: 0.0
+  tta_hflip: true
+  so_penalty: 2.0
+  batch_size: 8
+  out_dir: outputs/htp_depression_dd_exp_d3_soft_focal
+  log_every: 5

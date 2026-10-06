@@ -1,0 +1,73 @@
+# Secrets and local environment files
+.env*
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*.json
+
+# Python environments, caches, and build artifacts
+**/.venv/
+**/venv/
+**/env/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# Local data and research materials
+datasets/
+docs/
+src/
+analysis/**/*.md
+analysis/**/*.csv
+analysis/**/*.txt
+
+# Model weights, serialized data, and archives
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.onnx
+*.npy
+*.npz
+*.pkl
+*.pickle
+*.joblib
+*.h5
+*.hdf5
+*.zip
+*.tar
+*.tgz
+*.gz
+*.7z
+*.rar
+
+# Generated experiment outputs, reports, and logs
+outputs/
+checkpoints/
+artifacts/
+runs/
+wandb/
+logs/
+*.log
+*.out
+analysis/figures/
+analysis/tables/
+loader/data_analysis/analysis/dataset_analysis_results.*
+loader/data_analysis/analysis/lab/dataset_analysis_results.*
+
+# Local experiment launchers contain machine-specific paths
+scripts/launch_*.sh
+scripts/watch_*.sh
+scripts/run_viola_ablation_queue.sh
+
+# Operating-system files
+.DS_Store

@@ -1,0 +1,55 @@
+# D22 HEAD_MICRO_D21 — D1-style forever-freeze FT from D21 best (AFTER D21 finishes)
+# Only launch if D21 foundation beats old LONG test F1@τ 0.742.
+# Preserves D21 drawing mean/std — do NOT resume ImageNet-normed D1/LONG.
+#
+# Package (one coherent follow-up, not stacked knobs):
+#   - resume D21 best.pt
+#   - freeze_epochs=999, lr=5e-6, LS=0.05 (D1 recipe)
+#   - same DD mean/std as D21
+#   - monitor=f1_tau, TTA hflip
+# NOT stacked: EMA (D15 tie), AMP (D20 null), soft_aug close (D19 null),
+#   sampler 1.20 (D17 hurt), progressive, LDAM, QD.
+base: ../dd_train.yaml
+
+seed: 42
+
+data:
+  strong_aug: false
+  include_augmented: false
+  contrast_stretch: true
+  mean: [0.9817, 0.9817, 0.9817]
+  std: [0.0828, 0.0828, 0.0828]
+
+model:
+  dropout: 0.3
+
+train:
+  resume: outputs/htp_depression_dd_exp_d21_long_ddnorm/best.pt
+  epochs: 50
+  freeze_epochs: 999
+  backbone_lr_mult: 0.0
+  lr: 5.0e-6
+  weight_decay: 1.0e-3
+  lr_schedule: cosine
+  lr_min: 1.0e-8
+  warmup_epochs: 0
+  monitor: f1_tau
+  patience: 25
+  threshold_criterion: f1
+  class_weights: [0.6421, 2.2599]
+  class_balanced_sampler: true
+  sampler_de_boost: 1.0
+  focal_gamma: 0.0
+  dice_weight: 0.0
+  label_smoothing: 0.05
+  tta_hflip: true
+  so_penalty: 2.0
+  batch_size: 8
+  amp: false
+  grad_clip_norm: 0.0
+  # Optional Ultralytics ramped EMA (off by default — D15 fixed EMA tied).
+  # ema_decay: 0.9999
+  # ema_tau: 2000
+  # ema_eval: true
+  out_dir: outputs/htp_depression_dd_exp_d22_head_d21
+  log_every: 5

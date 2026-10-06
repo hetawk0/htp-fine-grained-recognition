@@ -1,0 +1,9 @@
+base: default.yaml
+
+model:
+  name: soe_fbanet
+  multi_scale_sofe: true
+  use_bilevel_attention: true
+
+train:
+  out_dir: outputs/soe_fbanet

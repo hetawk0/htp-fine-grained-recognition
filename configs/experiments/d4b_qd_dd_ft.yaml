@@ -1,0 +1,45 @@
+# D4b — DD fine-tune after QuickDraw backbone transfer (D1-like recipe)
+# 1) Stage A done: outputs/quickdraw_htp_pretrain/best.pt
+# 2) python scripts/transfer_backbone.py \
+#      --src outputs/quickdraw_htp_pretrain/best.pt \
+#      --dst-config configs/dd_train.yaml \
+#      --out outputs/htp_depression_dd_init/from_qd_backbone.pt
+# 3) Train this config (resume transferred weights).
+#
+# Hypothesis: QD house/tree/face stroke features transfer to HTP under the
+# champion D1 recipe (forever-freeze + micro-LR + no strong_aug + LS + f1_tau/TTA).
+# Isolates init/representation; does not re-test strong_aug / focal / De boost.
+base: ../dd_train.yaml
+
+seed: 42
+
+data:
+  strong_aug: false
+  include_augmented: false
+
+model:
+  dropout: 0.3
+
+train:
+  resume: outputs/htp_depression_dd_init/from_qd_backbone.pt
+  epochs: 60
+  freeze_epochs: 999         # D1-like: protect QD backbone; train head/SOFE only
+  backbone_lr_mult: 0.0
+  lr: 5.0e-6                 # D1 micro-LR
+  weight_decay: 1.0e-3
+  lr_schedule: cosine
+  lr_min: 1.0e-8
+  monitor: f1_tau
+  patience: 25
+  threshold_criterion: f1
+  class_weights: [0.6421, 2.2599]
+  class_balanced_sampler: true
+  sampler_de_boost: 1.0
+  focal_gamma: 0.0
+  dice_weight: 0.0
+  label_smoothing: 0.05
+  tta_hflip: true
+  so_penalty: 2.0
+  batch_size: 8
+  out_dir: outputs/htp_depression_dd_exp_d4b_qd_ft
+  log_every: 5

@@ -1,0 +1,9 @@
+# Vabl_amp — D20 AMP + grad clip 10 under the honest D27 protocol.
+# D20's 0.770 was forever-freeze on ImageNet-norm D1 weights. The D20 card
+# deferred drawing mean/std to a from-scratch run. One lever on D27.
+base: d27_resnet50_ddnorm.yaml
+
+train:
+  amp: true
+  grad_clip_norm: 10.0
+  out_dir: outputs/Vabl_amp
