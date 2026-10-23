@@ -1,0 +1,38 @@
+# D2 DE_F1_FOCUS — optimize minority De F1@τ; long freeze; mild De oversample
+# Hypothesis: test bottleneck is De F1=0.62; macro-F1@τ picks high τ that
+# sacrifices De recall. Select on f1_de_tau; mild dice + de_boost (not v1 focal).
+base: ../../dd_train.yaml
+
+seed: 42
+
+data:
+  strong_aug: true
+  include_augmented: false
+
+model:
+  dropout: 0.3
+
+train:
+  resume: outputs/htp_depression_dd_init/best_long_ep64.pt
+  epochs: 60
+  freeze_epochs: 40          # long freeze — avoid early unfreeze destroy
+  backbone_lr_mult: 0.05
+  lr: 1.0e-5
+  weight_decay: 1.0e-3
+  lr_schedule: cosine
+  lr_min: 1.0e-7
+  monitor: f1_de_tau         # minority primary
+  patience: 20
+  threshold_criterion: f1_de # τ for De F1 (val only)
+  class_weights: [0.75, 1.80] # softer than inverse-freq; sampler carries rest
+  class_balanced_sampler: true
+  sampler_de_boost: 1.35
+  sampler_num_samples: 1400  # more De draws / epoch; no 1_augmented clones
+  focal_gamma: 0.0
+  dice_weight: 0.15          # mild soft-Dice; not kitchen-sink focal
+  label_smoothing: 0.0
+  tta_hflip: true
+  so_penalty: 2.0
+  batch_size: 8
+  out_dir: outputs/htp_depression_dd_exp_d2_de_f1
+  log_every: 5

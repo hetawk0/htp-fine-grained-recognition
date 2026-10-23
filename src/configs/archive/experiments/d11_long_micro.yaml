@@ -1,0 +1,39 @@
+# D11 LONG_MICRO — D1 core + ONE lever: quieter LR + longer patience
+# Evidence: D1 champ (test F1@τ 0.773) peaked ep1 then ES@26; D8 quieter LR
+#   was stacked with LS=0.10 (null). Isolates longer micro-FT schedule only.
+# Skip D9 CW mix (D9 mid val 0.882 < D1 0.890). Keep D1 init / freeze / LS /
+#   no strong_aug / no sampler_de_boost / no focal/dice.
+base: ../../dd_train.yaml
+
+seed: 42
+
+data:
+  strong_aug: false
+  include_augmented: false
+
+model:
+  dropout: 0.3
+
+train:
+  resume: outputs/htp_depression_dd_exp_d1_head_micro/best.pt
+  epochs: 60
+  freeze_epochs: 999
+  backbone_lr_mult: 0.0
+  lr: 2.0e-6                 # primary lever vs D1 5e-6 (quieter head FT)
+  weight_decay: 1.0e-3
+  lr_schedule: cosine
+  lr_min: 1.0e-8
+  monitor: f1_tau
+  patience: 35               # paired schedule lever: allow longer micro-FT
+  threshold_criterion: f1
+  class_weights: [0.6421, 2.2599]
+  class_balanced_sampler: true
+  sampler_de_boost: 1.0
+  focal_gamma: 0.0
+  dice_weight: 0.0
+  label_smoothing: 0.05
+  tta_hflip: true
+  so_penalty: 2.0
+  batch_size: 8
+  out_dir: outputs/htp_depression_dd_exp_d11_long_micro
+  log_every: 5

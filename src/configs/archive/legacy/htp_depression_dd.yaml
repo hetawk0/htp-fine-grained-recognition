@@ -1,0 +1,2 @@
+# Alias of dd_train.yaml — paper-facing config name
+base: ../../dd_train.yaml

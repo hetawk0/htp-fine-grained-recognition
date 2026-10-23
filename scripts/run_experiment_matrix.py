@@ -2,7 +2,6 @@
 """Run a resumable, config-driven sequence of Viola experiments."""
 
 from __future__ import annotations
-from loader.config import deep_update, load_config
 
 import argparse
 import fcntl
@@ -19,8 +18,10 @@ from typing import Any, Dict, List
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+if str(ROOT / "src") not in sys.path:
+    sys.path.insert(0, str(ROOT / "src"))
+
+from loader.config import deep_update, load_config  # noqa: E402
 
 
 ID_PATTERN = re.compile(r"^[a-z0-9][a-z0-9_-]*$")

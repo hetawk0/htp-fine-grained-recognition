@@ -1,0 +1,36 @@
+# F1PUSH_v3_soft — protect LONG ranking; no destructive strong_aug
+# Hypothesis: v2 peaked at ep1 (LONG+TTA+τ); further FT + Affine/ColorJitter eroded F1@τ.
+# Single lever stack: soft default aug, longer freeze, lower LR, keep CW/sampler, monitor f1_tau.
+base: ../../dd_train.yaml
+
+seed: 42
+
+data:
+  strong_aug: false            # CRITICAL vs v2
+  include_augmented: false
+
+model:
+  dropout: 0.3
+
+train:
+  resume: outputs/htp_depression_dd_init/best_long_ep64.pt
+  epochs: 50
+  freeze_epochs: 12            # longer head-only adaptation before backbone
+  backbone_lr_mult: 0.1
+  lr: 8.0e-6                   # gentler than v2 1.5e-5
+  weight_decay: 1.0e-3
+  lr_schedule: cosine
+  lr_min: 1.0e-7
+  monitor: f1_tau
+  patience: 15
+  threshold_criterion: f1      # macro-F1; v4 uses f1_de
+  class_weights: [0.6421, 2.2599]
+  class_balanced_sampler: true
+  sampler_de_boost: 1.0
+  focal_gamma: 0.0
+  label_smoothing: 0.05        # mild calibration; not focal
+  tta_hflip: true
+  so_penalty: 2.0
+  batch_size: 8
+  out_dir: outputs/htp_depression_dd_soe_fbanet_f1push_v3_soft
+  log_every: 5

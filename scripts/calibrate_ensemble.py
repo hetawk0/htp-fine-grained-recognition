@@ -7,7 +7,7 @@ for selection.
 
 Example:
   python scripts/calibrate_ensemble.py \\
-    --config configs/experiments/d1_head_micro.yaml \\
+    --config src/configs/archive/experiments/d1_head_micro.yaml \\
     --checkpoints outputs/htp_depression_dd_exp_d1_head_micro/best.pt \\
                  outputs/htp_depression_dd_init/best_long_ep64.pt \\
     --tta-hflip --criterion f1 --device cuda
@@ -26,8 +26,8 @@ import torch
 import torch.nn.functional as F
 
 ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+if str(ROOT / "src") not in sys.path:
+    sys.path.insert(0, str(ROOT / "src"))
 
 from loader.config import load_config
 from loader.dataset_loader import build_dataloaders

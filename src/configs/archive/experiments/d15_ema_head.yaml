@@ -1,0 +1,42 @@
+# D15 EMA_HEAD — D1 forever-freeze + EMA weights (generalization)
+# Research: EMA improves gen/calibration (arxiv 2411.18704). Targets val→test gap.
+# Evidence: D13 progressive hurt test (0.759); D14 best@ep1 0.770; keep freeze=999.
+# Patience 15 (NOT 45). Single lever: ema_decay=0.999.
+base: ../../dd_train.yaml
+
+seed: 42
+
+data:
+  strong_aug: false
+  include_augmented: false
+
+model:
+  dropout: 0.3
+
+train:
+  resume: outputs/htp_depression_dd_exp_d1_head_micro/best.pt
+  epochs: 50
+  freeze_epochs: 999
+  backbone_lr_mult: 0.0
+  lr: 5.0e-6
+  weight_decay: 1.0e-3
+  lr_schedule: cosine
+  lr_min: 1.0e-8
+  monitor: f1_tau
+  patience: 15
+  threshold_criterion: f1
+  class_weights: [0.6421, 2.2599]
+  class_balanced_sampler: true
+  sampler_de_boost: 1.0
+  focal_gamma: 0.0
+  dice_weight: 0.0
+  ldam_max_m: 0.0
+  label_smoothing: 0.05
+  ema_decay: 0.999
+  ema_eval: true
+  tta_hflip: true
+  tta_mode: hflip
+  so_penalty: 2.0
+  batch_size: 8
+  out_dir: outputs/htp_depression_dd_exp_d15_ema_head
+  log_every: 5

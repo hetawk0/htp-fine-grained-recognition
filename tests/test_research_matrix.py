@@ -8,8 +8,8 @@ from pathlib import Path
 
 import torch
 ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+if str(ROOT / "src") not in sys.path:
+    sys.path.insert(0, str(ROOT / "src"))
 if str(ROOT / "scripts") not in sys.path:
     sys.path.insert(0, str(ROOT / "scripts"))
 
@@ -102,7 +102,7 @@ print('OK')
 
 class ExperimentMatrixTests(unittest.TestCase):
     def test_initial_matrix_is_unique_and_uses_one_frozen_protocol(self):
-        matrix_path = ROOT / "configs/research/phase1_phase2_seed42.yaml"
+        matrix_path = ROOT / "src/configs/archive/research/phase1_phase2_seed42.yaml"
         matrix = _load_matrix(matrix_path)
         self.assertEqual(len(matrix["experiments"]), 10)
         ids = [experiment["id"] for experiment in matrix["experiments"]]

@@ -1,0 +1,38 @@
+# D12 SOFT_DE_SAMPLER — D1 core + ONE lever: mild sampler De oversample
+# Evidence: D2 hurt with sampler_de_boost=1.35 + strong_aug + f1_de_tau + dice;
+#   D7 null with de_boost=1.25 + dice + CW change. Isolates soft sampler ratio
+#   alone under D1 recipe (monitor=f1_tau, no strong_aug, LONG CW, no dice).
+base: ../../dd_train.yaml
+
+seed: 42
+
+data:
+  strong_aug: false
+  include_augmented: false
+
+model:
+  dropout: 0.3
+
+train:
+  resume: outputs/htp_depression_dd_exp_d1_head_micro/best.pt
+  epochs: 50
+  freeze_epochs: 999
+  backbone_lr_mult: 0.0
+  lr: 5.0e-6
+  weight_decay: 1.0e-3
+  lr_schedule: cosine
+  lr_min: 1.0e-8
+  monitor: f1_tau            # NOT f1_de_tau (D2 hurt)
+  patience: 25
+  threshold_criterion: f1
+  class_weights: [0.6421, 2.2599]  # keep D1 CW; sampler is the only De lever
+  class_balanced_sampler: true
+  sampler_de_boost: 1.20     # primary lever (softer than D2 1.35 / D7 1.25)
+  focal_gamma: 0.0
+  dice_weight: 0.0
+  label_smoothing: 0.05
+  tta_hflip: true
+  so_penalty: 2.0
+  batch_size: 8
+  out_dir: outputs/htp_depression_dd_exp_d12_soft_de_sampler
+  log_every: 5

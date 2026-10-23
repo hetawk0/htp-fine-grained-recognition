@@ -1,6 +1,6 @@
 # Viola HTP — modular training codebase
 
-Config-driven **SOANet / SOE-FBANet** pipeline for House–Tree–Person (HTP) depression recognition, organized like [`latex/meddef`](../meddef/) (`model/`, `loader/`, `configs/`, `scripts/`).
+Config-driven **SOANet / SOE-FBANet** pipeline for House–Tree–Person (HTP) depression recognition. Reusable project code and YAML presets live under `src/`; runnable commands remain in `scripts/`.
 
 This repository contains code and configuration only. Clinical HTP data are not included; provide an approved local dataset to train on clinical examples. Smoke tests use synthetic sketches, and QuickDraw can be downloaded separately for sketch-domain bootstrap.
 
@@ -12,12 +12,15 @@ This repository contains code and configuration only. Clinical HTP data are not 
 
 ```text
 latex/viola/
-  model/           # SOANet, SOE-FBANet, FBANet + SOFE/SOSM/WFF/bi-level attn
-  loader/          # synthetic | quickdraw | zhang/pan/bilgi folder protocols
-  configs/         # YAML + ablation presets (meddef-style toggles)
+  src/
+    model/         # SOANet, SOE-FBANet, FBANet + SOFE/SOSM/WFF/bi-level attn
+    loader/        # synthetic | quickdraw | zhang/pan/bilgi folder protocols
+    utils/         # seed, metrics (acc/F1/AUC), checkpoints
+    configs/       # active defaults and ablation presets
+      archive/     # historical trial configs; see EXPERIMENT_RESULTS.md
+    analysis/viz/  # optional dataset visualization code
   scripts/         # train / eval / smoke_test / download_quickdraw
-  utils/           # seed, metrics (acc/F1/AUC), checkpoints
-  analysis/        # visualization code; generated reports stay local
+  analysis/        # local reports and generated figures (not included)
   datasets/        # local-only data (not included in this repository)
 ```
 
@@ -25,38 +28,72 @@ latex/viola/
 
 ## Quick start
 
+Use Python 3.10 or newer. From the repository root:
+
 ```bash
-cd latex/viola
 python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 
 # Smoke test (synthetic data, no download)
-python scripts/smoke_test.py --config configs/smoke.yaml
+python scripts/smoke_test.py --config src/configs/smoke.yaml
 
-# Short train
-python scripts/train.py --config configs/smoke.yaml
+# One-epoch synthetic training run
+python scripts/train.py --config src/configs/smoke.yaml
 
 # Optional QuickDraw bootstrap (~330 MB)
 python scripts/download_quickdraw.py
-# then set data.name: quickdraw in a config (see configs/default.yaml)
-
-# For an approved local clinical dataset, set data.name and data.root in a config.
+# then set data.name: quickdraw in a config (see src/configs/default.yaml)
 ```
 
-Evaluate a checkpoint:
+The smoke config uses generated synthetic sketches and requires no download.
+Training writes `best.pt`, `last.pt`, and `history.json` under the configured
+`train.out_dir` (for the smoke config: `outputs/smoke/`). These outputs are
+local and ignored by Git. To train with the default configuration instead:
+
+```bash
+python scripts/train.py --config src/configs/default.yaml
+```
+
+Training options include `--epochs N`, `--device auto|cpu|mps|cuda`, and
+`--resume path/to/checkpoint.pt`. `auto` selects CUDA, then Apple MPS, then CPU.
+For CUDA, install the PyTorch build appropriate for your system if the standard
+`requirements.txt` install does not provide CUDA support.
+
+Evaluate a checkpoint (using the smoke run here):
 
 ```bash
 python scripts/eval.py \
-  --config configs/smoke.yaml \
+  --config src/configs/smoke.yaml \
   --checkpoint outputs/smoke/best.pt \
-  --split test
+  --split test \
+  --device cpu
 ```
+
+Evaluation prints JSON to stdout. Save it locally if desired:
+
+```bash
+python scripts/eval.py \
+  --config src/configs/smoke.yaml \
+  --checkpoint outputs/smoke/best.pt \
+  --split test > outputs/smoke/eval_test.json
+```
+
+For available options, run `python scripts/train.py --help`,
+`python scripts/eval.py --help`, or `python scripts/smoke_test.py --help`.
+
+For the best recorded clinical single-model recipe, use
+`src/configs/soefbanet_resnet50_ddnorm.yaml`. It reproduces the full SOE-FBANet
+cross-entropy setup; the
+recorded aggregate results and earlier trial comparisons are in
+[EXPERIMENT_RESULTS.md](./EXPERIMENT_RESULTS.md). That result has not been
+independently reproduced from a checkpoint in this repository.
 
 For binary classification, evaluation reports argmax metrics and, when a
 validation split is available, test metrics at a threshold selected on
 validation only. `history.json` from training stores the resolved config,
 epoch history, best epoch, validation/test argmax metrics, selected threshold,
-and complete validation/test metrics at that threshold. `utils/metrics.py`
+and complete validation/test metrics at that threshold. `src/utils/metrics.py`
 provides accuracy, macro/weighted and per-class precision/recall/F1, class
 support, confusion counts, sensitivity/specificity, ROC-AUC, and PR-AUC
 (average precision). ROC-AUC and PR-AUC use continuous probabilities and do
@@ -68,9 +105,9 @@ To save standalone evaluation JSON for an auditable checkpoint:
 
 ```bash
 python scripts/eval.py \
-  --config configs/experiments/vabl_focal.yaml \
-  --checkpoint outputs/Vabl_focal/best.pt \
-  --split test > outputs/Vabl_focal/eval_test.json
+  --config src/configs/soefbanet_resnet50_ddnorm.yaml \
+  --checkpoint outputs/soefbanet_resnet50_ddnorm/best.pt \
+  --split test > outputs/soefbanet_resnet50_ddnorm/eval_test.json
 ```
 
 The current model/eval path is classification-only. Small-object-aware feature
@@ -85,7 +122,7 @@ not detection predictions or detection evaluation.
 
 ## Ablation flags
 
-Set under `model:` in YAML (or use `configs/ablations/`):
+Set under `model:` in YAML (or use `src/configs/ablations/`):
 
 | Flag | Default (SOE-FBANet) | Role |
 |------|----------------------|------|
@@ -104,10 +141,10 @@ Set under `model:` in YAML (or use `configs/ablations/`):
 **ideas2-style ablations** (copy presets):
 
 ```bash
-python scripts/train.py --config configs/ablations/no_sofe.yaml
-python scripts/train.py --config configs/ablations/no_sosm.yaml
-python scripts/train.py --config configs/ablations/no_wff.yaml
-python scripts/train.py --config configs/ablations/baseline_fbanet.yaml
+python scripts/train.py --config src/configs/ablations/no_sofe.yaml
+python scripts/train.py --config src/configs/ablations/no_sosm.yaml
+python scripts/train.py --config src/configs/ablations/no_wff.yaml
+python scripts/train.py --config src/configs/ablations/baseline_fbanet.yaml
 ```
 
 Training loss: `CE + so_penalty * SmallObjectLoss` when `so_mask` is present (`train.so_penalty`, default `2.0`).
@@ -118,9 +155,9 @@ Training loss: `CE + so_penalty * SmallObjectLoss` when `so_mask` is present (`t
 
 | meddef | Viola |
 |--------|--------|
-| `model/model_loader.py` + ablation variants | `model/model_loader.py` + YAML flags |
-| `loader/config.yaml` + dataset factory | `configs/*.yaml` + `loader/dataset_loader.py` |
-| `train.py` / metrics / checkpoints | `scripts/train.py`, `utils/metrics.py`, `utils/checkpoint.py` |
+| `model/model_loader.py` + ablation variants | `src/model/model_loader.py` + YAML flags |
+| Config YAML + dataset factory | `src/configs/*.yaml` + `src/loader/dataset_loader.py` |
+| `train.py` / metrics / checkpoints | `scripts/train.py`, `src/utils/metrics.py`, `src/utils/checkpoint.py` |
 
 ---
 
@@ -131,39 +168,81 @@ annotations, and split manifests in the local, Git-ignored `datasets/` folder.
 Do not upload clinical data or annotation work to a public repository or
 sharing service without explicit permission.
 
-For example, configure a local dataset root:
+The loader supports either class subfolders or a CSV manifest. For class
+subfolders, use the class names expected by the selected dataset (`zhang` and
+`bilgi`: `normal/` and `depressed/`; `pan`: `negative/` and `positive/`):
 
 ```text
-datasets/raw/my_dataset/images/
-datasets/raw/my_dataset/labels.csv
+datasets/raw/my_dataset/
+  normal/
+    sample_001.png
+  depressed/
+    sample_002.png
 ```
 
-Point the config at that local root:
-
-```yaml
-data:
-  name: htp_depression_dd
-  root: datasets/raw/my_dataset
-  include_augmented: false
-  invert: false
-model:
-  name: soe_fbanet
-  backbone: resnet18   # optional once data volume allows
-  pretrained: true
-train:
-  epochs: 50
-  batch_size: 16
-  lr: 1.0e-5
-```
-
-4. Optional Label Studio boxes → CSV columns `has_small_object,x,y,w,h` (see `loader/clinical.py`).
-
-CSV schema example:
+Alternatively, put `labels.csv` at the dataset root and images under `images/`.
+The CSV must have `filename` and `label` columns. Image paths can be relative
+to the dataset root; a bare image filename is also looked up under `images/`.
+Labels are `0` (normal/negative) and `1` (depressed/positive). Optional
+small-object annotations use normalized `x,y,w,h` values:
 
 ```csv
 filename,label,has_small_object,x,y,w,h
-img_001.png,1,1,0.1,0.2,0.15,0.18
+images/sample_001.png,0,0,,,
+images/sample_002.png,1,1,0.1,0.2,0.15,0.18
 ```
+
+Create an ignored local config at `src/configs/local.yaml` (this path is in
+`.gitignore`) so your machine-specific dataset path is not accidentally
+committed:
+
+```yaml
+base: default.yaml
+data:
+  name: zhang             # zhang | pan | bilgi | htp_depression_dd
+  root: datasets/raw/my_dataset
+  split_ratios: [0.7, 0.15, 0.15]
+train:
+  epochs: 50
+  out_dir: outputs/my_clinical_run
+```
+
+Then run the smoke test, train, and evaluate using that config:
+
+```bash
+python scripts/smoke_test.py --config src/configs/local.yaml --device cpu
+python scripts/train.py --config src/configs/local.yaml --device auto
+python scripts/eval.py \
+  --config src/configs/local.yaml \
+  --checkpoint outputs/my_clinical_run/best.pt \
+  --split test \
+  --device cpu
+```
+
+The loader creates deterministic, stratified train/validation/test splits from
+the configured ratios and seed. Keep the test split for final evaluation; do
+not use it to select training settings. For the `htp_depression_dd` layout,
+labels are parsed from `Nor`/`De` filename tags rather than folder names, and
+augmented images are excluded by default.
+
+For the project's best recorded recipe on HTP-Depression-DD, run:
+
+```bash
+python scripts/train.py --config src/configs/soefbanet_resnet50_ddnorm.yaml --device auto
+python scripts/eval.py \
+  --config src/configs/soefbanet_resnet50_ddnorm.yaml \
+  --checkpoint outputs/soefbanet_resnet50_ddnorm/best.pt \
+  --split test \
+  --device auto
+```
+
+This config requires the authorized local HTP-Depression-DD dataset and its
+frozen split manifest. Historical trial configs are retained under
+`src/configs/archive/`; they are not part of the recommended run path.
+
+QuickDraw is an optional public sketch-domain bootstrap, not clinical HTP data.
+Download its house/tree/face categories with `python scripts/download_quickdraw.py`;
+the files are stored under the ignored `datasets/` directory.
 
 ## Before pushing
 

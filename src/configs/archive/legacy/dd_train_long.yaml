@@ -1,0 +1,11 @@
+# Topic A — longer from-scratch DD train (kept for reference; prefer dd_finetune.yaml)
+base: ../../dd_train.yaml
+
+train:
+  epochs: 120
+  patience: 25
+  monitor: auc
+  threshold_criterion: f1
+  lr_schedule: cosine
+  lr_min: 1.0e-6
+  out_dir: outputs/htp_depression_dd_soe_fbanet_long

@@ -1,0 +1,152 @@
+name: viola_phase1_phase2_seed42
+base_config: src/configs/archive/experiments/d27_resnet50_ddnorm.yaml
+output_root: outputs/research_phase1_phase2_seed42
+seed: 42
+cooldown_seconds: 5
+
+defaults:
+  reproducibility:
+    deterministic: true
+    warn_only: false
+  model:
+    backbone: resnet50
+    pretrained: true
+    in_channels: 3
+    dropout: 0.3
+    use_bilevel_attention: true
+    multi_scale_sofe: true
+    so_weight: 1.5
+    learnable_fusion: true
+    semantic_dim: 64
+  train:
+    epochs: 120
+    batch_size: 4
+    lr: 1.0e-4
+    weight_decay: 1.0e-3
+    lr_schedule: cosine
+    lr_min: 1.0e-6
+    freeze_epochs: 0
+    patience: 25
+    monitor: f1_tau
+    threshold_criterion: f1
+    class_weights: null
+    class_balanced_sampler: false
+    sampler_de_boost: 1.0
+    focal_gamma: 0.0
+    dice_weight: 0.0
+    label_smoothing: 0.0
+    so_penalty: 0.0
+    num_workers: 0
+    amp: false
+    tta_hflip: true
+
+experiments:
+  - id: b0_resnet50_ce
+    id: baseline_resnet50_ce
+    title: ResNet-50 backbone baseline (cross-entropy)
+    group: backbone_baseline
+    overrides:
+      model:
+        name: backbone_classifier
+
+  - id: attention_control_ce
+    legacy_id: a0_attention_control_ce
+    title: ResNet-50 with bi-level attention (component control)
+    group: architecture_control
+    overrides:
+      model:
+        name: soe_fbanet
+        use_sofe: false
+        use_sosm: false
+        use_wff: false
+        use_small_object_branch: false
+
+  - id: ablation_sofe_ce
+    title: SOE-FBANet with SOFE only (cross-entropy)
+    group: architecture_ablation
+    overrides:
+      model:
+        name: soe_fbanet
+        use_sofe: true
+        use_sosm: false
+        use_wff: false
+        use_small_object_branch: false
+
+  - id: ablation_sosm_ce
+    title: SOE-FBANet with SOSM only (cross-entropy)
+    group: architecture_ablation
+    overrides:
+      model:
+        name: soe_fbanet
+        use_sofe: false
+        use_sosm: true
+        use_wff: false
+        use_small_object_branch: false
+
+  - id: ablation_wff_ce
+    title: SOE-FBANet with WFF only (cross-entropy)
+    group: architecture_ablation
+    overrides:
+      model:
+        name: soe_fbanet
+        use_sofe: false
+        use_sosm: false
+        use_wff: true
+        use_small_object_branch: true
+
+  - id: ablation_sofe_sosm_ce
+    title: SOE-FBANet with SOFE and SOSM (cross-entropy)
+    group: architecture_ablation
+    overrides:
+      model:
+        name: soe_fbanet
+        use_sofe: true
+        use_sosm: true
+        use_wff: false
+        use_small_object_branch: false
+
+  - id: ablation_sofe_wff_ce
+    title: SOE-FBANet with SOFE and WFF (cross-entropy)
+    group: architecture_ablation
+    overrides:
+      model:
+        name: soe_fbanet
+        use_sofe: true
+        use_sosm: false
+        use_wff: true
+        use_small_object_branch: true
+
+  - id: ablation_sosm_wff_ce
+    title: SOE-FBANet with SOSM and WFF (cross-entropy)
+    group: architecture_ablation
+    overrides:
+      model:
+        name: soe_fbanet
+        use_sofe: false
+        use_sosm: true
+        use_wff: true
+        use_small_object_branch: true
+
+  - id: soefbanet_full_ce
+    title: Full SOE-FBANet (cross-entropy)
+    group: architecture_ablation
+    overrides:
+      model:
+        name: soe_fbanet
+        use_sofe: true
+        use_sosm: true
+        use_wff: true
+        use_small_object_branch: true
+
+  - id: soefbanet_full_focal_gamma_0_5
+    title: Full SOE-FBANet (focal loss, gamma 0.5)
+    group: matched_loss_ablation
+    overrides:
+      model:
+        name: soe_fbanet
+        use_sofe: true
+        use_sosm: true
+        use_wff: true
+        use_small_object_branch: true
+      train:
+        focal_gamma: 0.5

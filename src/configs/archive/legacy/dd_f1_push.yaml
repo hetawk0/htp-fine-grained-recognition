@@ -1,0 +1,37 @@
+# Topic A — F1-first fine-tune from LONG best (target macro-F1 ≥ 0.90)
+# Aggressive v1 (focal+mild CW+de_boost) *hurt* LONG ranking in ep1–4 (f1@τ 0.79→0.76).
+# v2: keep LONG recipe mostly intact; change *selection* to f1_tau + TTA + mild strong_aug.
+base: ../../dd_train.yaml
+
+seed: 42
+
+data:
+  strong_aug: true
+  include_augmented: false
+
+model:
+  dropout: 0.3
+
+train:
+  resume: outputs/htp_depression_dd_init/best_long_ep64.pt
+  epochs: 60
+  freeze_epochs: 6
+  backbone_lr_mult: 0.1
+  lr: 1.5e-5                 # gentler than first F1PUSH (3e-5) / prior FT (2e-5)
+  weight_decay: 1.0e-3
+  lr_schedule: cosine
+  lr_min: 1.0e-7
+  monitor: f1_tau            # was auc — FT missed ep9 F1≈0.83
+  patience: 20
+  threshold_criterion: f1
+  # Keep base inverse-freq weights (sampler alone under-corrects without them)
+  class_weights: [0.6421, 2.2599]
+  class_balanced_sampler: true
+  sampler_de_boost: 1.0
+  focal_gamma: 0.0           # off — focal destabilized warm-start
+  label_smoothing: 0.0
+  tta_hflip: true
+  so_penalty: 2.0
+  batch_size: 8
+  out_dir: outputs/htp_depression_dd_soe_fbanet_f1push
+  log_every: 5

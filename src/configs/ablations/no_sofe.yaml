@@ -1,0 +1,8 @@
+# src/configs/ablations — Topic A (SOE-FBANet) on HTP-Depression-DD
+base: ../dd_train.yaml
+
+model:
+  use_sofe: false
+
+train:
+  out_dir: outputs/ablation_htp_dd_no_sofe

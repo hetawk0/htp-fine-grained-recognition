@@ -2,9 +2,22 @@
 """Train Viola HTP models from a YAML config."""
 
 from __future__ import annotations
+
+import argparse
+import json
+import math
+import sys
+from pathlib import Path
+from typing import Optional
+
 from tqdm import tqdm
 import torch.nn as nn
 import torch
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT / "src") not in sys.path:
+    sys.path.insert(0, str(ROOT / "src"))
+
 from loader.config import load_config
 from loader.dataset_loader import build_dataloaders, resolve_data_name
 from loader.transforms import cfg_transforms
@@ -14,17 +27,6 @@ from utils.checkpoint import load_checkpoint, save_checkpoint, torch_load
 from utils.ema import ModelEMA
 from utils.metrics import compute_metrics, positive_class_probs, sweep_threshold
 from utils.seed import set_seed
-
-import argparse
-import json
-import math
-import sys
-from pathlib import Path
-from typing import Optional
-
-ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
 
 
 def resolve_device(name: str) -> torch.device:
@@ -342,7 +344,7 @@ def main():
     parser.add_argument(
         "--config",
         type=str,
-        default=str(ROOT / "configs/default.yaml"),
+        default=str(ROOT / "src/configs/default.yaml"),
         help="Path to YAML config",
     )
     parser.add_argument("--epochs", type=int, default=None)

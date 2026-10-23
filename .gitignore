@@ -25,7 +25,13 @@ dist/
 # Local data and research materials
 datasets/
 docs/
-src/
+/src/*
+!/src/analysis/
+!/src/configs/
+!/src/loader/
+!/src/model/
+!/src/utils/
+src/configs/local.yaml
 analysis/**/*.md
 analysis/**/*.csv
 analysis/**/*.txt
@@ -61,8 +67,8 @@ logs/
 *.out
 analysis/figures/
 analysis/tables/
-loader/data_analysis/analysis/dataset_analysis_results.*
-loader/data_analysis/analysis/lab/dataset_analysis_results.*
+src/loader/data_analysis/analysis/dataset_analysis_results.*
+src/loader/data_analysis/analysis/lab/dataset_analysis_results.*
 
 # Local experiment launchers contain machine-specific paths
 scripts/launch_*.sh

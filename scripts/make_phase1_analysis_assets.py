@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 ASSET_DIR = ROOT / "docs" / "results" / "img"
 SOURCE_DIR = ASSET_DIR / "source_artifacts"
 
-RUNS = [
+HISTORY_RUNS = [
     ("baseline_resnet50_ce", "Plain ResNet-50 baseline"),
     ("attention_control_ce", "Attention-only control"),
     ("ablation_sofe_ce", "SOFE only"),
@@ -26,6 +26,11 @@ RUNS = [
     ("ablation_sofe_wff_ce", "SOFE + WFF"),
     ("ablation_sosm_wff_ce", "SOSM + WFF"),
 ]
+FULL_RUNS = [
+    ("soefbanet_full_ce", "Full SOE-FBANet; cross-entropy"),
+    ("soefbanet_full_focal_gamma_0_5", "Full SOE-FBANet; focal gamma 0.5"),
+]
+RUNS = HISTORY_RUNS + FULL_RUNS
 
 RUN_DIRS = {
     "attention_control_ce": "a0_attention_control_ce",
@@ -60,7 +65,7 @@ METRICS = [
 
 def load_runs(source_dir: Path) -> list[dict]:
     output = []
-    for run_id, label in RUNS:
+    for run_id, label in HISTORY_RUNS:
         history_path = source_dir / RUN_DIRS[run_id] / "history.json"
         if not history_path.is_file():
             raise FileNotFoundError(f"Missing completed run history: {history_path}")
@@ -73,6 +78,33 @@ def load_runs(source_dir: Path) -> list[dict]:
             "condition": label,
             "best_epoch": payload.get("best_epoch"),
             "evidence": "completed seed-42 run; held-out test",
+        }
+        for source, target in METRICS:
+            value = test.get(source)
+            row[target] = None if value is None else (
+                value if source in {"tn", "fp", "fn", "tp", "threshold", "loss"}
+                else 100.0 * value
+            )
+        output.append(row)
+    for run_id, label in FULL_RUNS:
+        history_path = (
+            ROOT / "outputs" / "research_phase1_phase2_seed42" / run_id
+            / "history.json"
+        )
+        if not history_path.is_file():
+            raise FileNotFoundError(f"Missing completed run history: {history_path}")
+        payload = json.loads(history_path.read_text(encoding="utf-8"))
+        test = payload.get("test")
+        if not isinstance(test, dict):
+            raise ValueError(f"Missing held-out test metrics in {history_path}")
+        row = {
+            "run_id": run_id,
+            "condition": label,
+            "best_epoch": payload.get("best_epoch"),
+            "evidence": (
+                "completed seed-42 held-out test from saved full-run history; "
+                "checkpoint SHA-256 verified against server"
+            ),
         }
         for source, target in METRICS:
             value = test.get(source)
@@ -105,7 +137,7 @@ def write_history_csv(source_dir: Path, output_dir: Path) -> dict[str, list[dict
     with path.open("w", newline="", encoding="utf-8") as stream:
         writer = csv.DictWriter(stream, fieldnames=fields)
         writer.writeheader()
-        for run_id, label in RUNS:
+        for run_id, label in HISTORY_RUNS:
             payload = json.loads(
                 (source_dir / RUN_DIRS[run_id] / "history.json").read_text(
                     encoding="utf-8"
@@ -152,6 +184,8 @@ SHORT_LABELS = {
     "ablation_sofe_sosm_ce": "SOFE + SOSM",
     "ablation_sofe_wff_ce": "SOFE + WFF",
     "ablation_sosm_wff_ce": "SOSM + WFF",
+    "soefbanet_full_ce": "Full SOE-FBANet CE",
+    "soefbanet_full_focal_gamma_0_5": "Full SOE-FBANet focal",
 }
 HISTORICAL_LABELS = {
     "historical_historical_focal_gamma_0_5": "Focal gamma 0.5",
@@ -334,7 +368,7 @@ def plot_factorial_heatmap(rows: list[dict], output_dir: Path) -> None:
         (1, 1, 0): ("ablation_sofe_sosm_ce", "SOFE+SOSM"),
         (1, 0, 1): ("ablation_sofe_wff_ce", "SOFE+WFF"),
         (0, 1, 1): ("ablation_sosm_wff_ce", "SOSM+WFF"),
-        (1, 1, 1): (None, "Full model (pending)"),
+        (1, 1, 1): ("soefbanet_full_ce", "Full model (CE)"),
     }
     elements = _svg_start(900, 540, "SOFE / SOSM / WFF factorial ablation")
     for panel, wff in enumerate((0, 1)):
@@ -361,7 +395,7 @@ def plot_factorial_heatmap(rows: list[dict], output_dir: Path) -> None:
                     color = _blend_color("#2563EB", level)
                     display = f"{value:.2f}%"
                 else:
-                    color, display = "#F1F5F9", "TBD"
+                    color, display = "#F1F5F9", "Not available"
                 dash = ' stroke-dasharray="5 4"' if not np.isfinite(value) else ""
                 elements.append(
                     f'<rect x="{cell_x}" y="{cell_y}" width="118" height="116" rx="8" '
@@ -374,7 +408,7 @@ def plot_factorial_heatmap(rows: list[dict], output_dir: Path) -> None:
         _svg_text(elements, x0 + 312, 114, "SOSM on", 9)
         _svg_text(elements, x0 + 98, 188, "SOFE off", 9, "end")
         _svg_text(elements, x0 + 98, 316, "SOFE on", 9, "end")
-    _svg_text(elements, 450, 515, "Held-out test macro-F1 (%) • pale dashed cell = result not yet verified", 11)
+    _svg_text(elements, 450, 515, "Held-out test macro-F1 (%)", 11)
     elements.append("</svg>")
     (output_dir / "factorial_macro_f1_heatmap.svg").write_text("\n".join(elements), encoding="utf-8")
 
@@ -543,11 +577,15 @@ def _prediction_metrics(item: dict) -> dict:
 
 
 def export_prediction_metrics(output_dir: Path) -> list[dict]:
-    prediction_dir = output_dir / "generated_csv"
+    prediction_dirs = (
+        output_dir / "generated_csv",
+        ROOT / "outputs" / "research_phase1_phase2_seed42" / "predictions",
+    )
     test_predictions = {
         item["run_id"]: item
         for item in (
             read_prediction_csv(path)
+            for prediction_dir in prediction_dirs
             for path in sorted(prediction_dir.glob("*_test_predictions.csv"))
         )
     }
@@ -555,6 +593,7 @@ def export_prediction_metrics(output_dir: Path) -> list[dict]:
         item["run_id"]: item
         for item in (
             read_prediction_csv(path)
+            for prediction_dir in prediction_dirs
             for path in sorted(prediction_dir.glob("*_val_predictions.csv"))
         )
     }
@@ -692,8 +731,8 @@ def write_status_csv(output_dir: Path) -> None:
         ("ablation_sofe_sosm_ce", "SOFE + SOSM", "complete"),
         ("ablation_sofe_wff_ce", "SOFE + WFF", "complete"),
         ("ablation_sosm_wff_ce", "SOSM + WFF", "complete"),
-        ("soefbanet_full_ce", "Full SOE-FBANet; cross-entropy", "last confirmed running at 2026-10-06 18:18 HKT; current server refresh timed out, state unknown"),
-        ("soefbanet_full_focal_gamma_0_5", "Full SOE-FBANet; focal gamma 0.5", "last confirmed queued at 2026-10-06 18:18 HKT; current server refresh timed out, state unknown"),
+        ("soefbanet_full_ce", "Full SOE-FBANet; cross-entropy", "complete; best epoch 14; final held-out evaluation and SHA-256-verified checkpoint available locally"),
+        ("soefbanet_full_focal_gamma_0_5", "Full SOE-FBANet; focal gamma 0.5", "complete; best epoch 13; final held-out evaluation and SHA-256-verified checkpoint available locally; deterministic-CUDA retry documented"),
     ]
     with (output_dir / "phase1_phase2_run_status.csv").open(
         "w", newline="", encoding="utf-8"
