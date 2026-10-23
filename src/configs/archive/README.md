@@ -1,13 +1,12 @@
 # Archived experiment configs
 
 These YAML files capture historical trials and research matrices. They are not
-the recommended starting point for new runs. Use:
+the recommended starting point for the HTP fine-grained recognition project.
+They belong to earlier experiments and should not be cited as results for the
+current project. Use `../default.yaml` or `../smoke.yaml` to validate the
+existing classifier code while the new detector and model experiments are
+being implemented.
 
-- `../soefbanet_resnet50_ddnorm.yaml` for the best recorded single-model clinical run
-  (SOE-FBANet full CE; see the repository's `EXPERIMENT_RESULTS.md`).
-- `../dd_train.yaml` as the clinical dataset baseline.
-- `../default.yaml` or `../smoke.yaml` for synthetic-data setup and smoke tests.
-
-Historical configs are retained for reproducibility. Their `outputs/` paths
-refer to local checkpoints that are not included in the repository. Clinical
-data and split manifests are also not included.
+These configs are retained as reusable implementation references. Their
+`outputs/` paths refer to local checkpoints that are not included. Datasets,
+split manifests, checkpoints, and historical results are not included.

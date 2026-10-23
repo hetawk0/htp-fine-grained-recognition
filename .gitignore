@@ -24,7 +24,11 @@ dist/
 
 # Local data and research materials
 datasets/
-docs/
+docs/*
+!docs/exp2/
+docs/exp2/*
+!docs/exp2/requirement.md
+!docs/exp2/results_and_figure_plan.md
 /src/*
 !/src/analysis/
 !/src/configs/
