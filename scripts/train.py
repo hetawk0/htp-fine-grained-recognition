@@ -8,7 +8,9 @@ import json
 import math
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Any, Dict, Optional
+
+import yaml
 
 from tqdm import tqdm
 import torch.nn as nn
@@ -22,7 +24,8 @@ from loader.config import load_config
 from loader.dataset_loader import build_dataloaders, resolve_data_name
 from loader.transforms import cfg_transforms
 from model.losses import DepressionLoss
-from model.model_loader import build_model
+from model.model_loader import build_model, list_models
+from model.backbone.cnn_backbone import BACKBONE_REGISTRY
 from utils.checkpoint import load_checkpoint, save_checkpoint, torch_load
 from utils.ema import ModelEMA
 from utils.metrics import compute_metrics, positive_class_probs, sweep_threshold
@@ -339,13 +342,109 @@ def rebuild_optimizer_and_scheduler(model, train_cfg, epochs, device_note: str =
     return optimizer, scheduler
 
 
+def _set_config_value(cfg: Dict[str, Any], dotted_key: str, value: Any) -> None:
+    keys = dotted_key.split(".")
+    if not all(keys):
+        raise ValueError(f"Invalid --set key '{dotted_key}': use section.key=value")
+
+    target = cfg
+    for key in keys[:-1]:
+        child = target.get(key)
+        if child is None:
+            child = {}
+            target[key] = child
+        if not isinstance(child, dict):
+            raise ValueError(
+                f"Cannot set '{dotted_key}': '{key}' is not a mapping"
+            )
+        target = child
+    target[keys[-1]] = value
+
+
+def _cli_config_overrides(args: argparse.Namespace) -> Dict[str, Any]:
+    overrides: Dict[str, Any] = {}
+    for assignment in args.set:
+        key, separator, raw_value = assignment.partition("=")
+        if not separator or not key:
+            raise ValueError(
+                f"Invalid --set value '{assignment}': expected section.key=value"
+            )
+        try:
+            value = yaml.safe_load(raw_value)
+        except yaml.YAMLError as exc:
+            raise ValueError(f"Invalid YAML value in --set '{assignment}'") from exc
+        _set_config_value(overrides, key, value)
+
+    direct_overrides = {
+        "data.name": args.data,
+        "model.name": args.arch,
+        "model.backbone": args.backbone,
+        "data.image_size": args.image_size,
+        "train.epochs": args.epochs,
+        "train.batch_size": args.batch_size,
+        "train.lr": args.lr,
+        "train.weight_decay": args.weight_decay,
+        "train.device": args.device,
+        "train.out_dir": args.out_dir,
+        "train.resume": args.resume,
+        "seed": args.seed,
+    }
+    for key, value in direct_overrides.items():
+        if value is not None:
+            _set_config_value(overrides, key, value)
+    if args.pretrained is not None:
+        _set_config_value(overrides, "model.pretrained", args.pretrained)
+    return overrides
+
+
 def main():
     parser = argparse.ArgumentParser(description="Train Viola HTP model")
     parser.add_argument(
         "--config",
         type=str,
         default=str(ROOT / "src/configs/default.yaml"),
-        help="Path to YAML config",
+        help="Base YAML config; direct options and --set override its values",
+    )
+    parser.add_argument(
+        "--data",
+        "--dataset",
+        dest="data",
+        type=str,
+        default=None,
+        help="Dataset name (for example synthetic, quickdraw, zhang, pan, bilgi, dd)",
+    )
+    parser.add_argument(
+        "--arch",
+        "--model",
+        dest="arch",
+        choices=list_models(),
+        default=None,
+        help="HTP model architecture (for example soe_fbanet, soanet, fbanet)",
+    )
+    parser.add_argument(
+        "--backbone",
+        choices=sorted(BACKBONE_REGISTRY),
+        default=None,
+        help="Feature-extractor backbone (for example cnn_lite, resnet18, resnet50)",
+    )
+    parser.add_argument("--image-size", type=int, default=None)
+    parser.add_argument("--batch-size", type=int, default=None)
+    parser.add_argument("--lr", type=float, default=None, help="Learning rate")
+    parser.add_argument("--weight-decay", type=float, default=None)
+    parser.add_argument("--out-dir", type=str, default=None)
+    parser.add_argument("--seed", type=int, default=None)
+    parser.add_argument(
+        "--pretrained",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Enable or disable pretrained backbone weights",
+    )
+    parser.add_argument(
+        "--set",
+        action="append",
+        default=[],
+        metavar="SECTION.KEY=VALUE",
+        help="Override any config value; repeat as needed (VALUE uses YAML types)",
     )
     parser.add_argument("--epochs", type=int, default=None)
     parser.add_argument("--device", type=str, default=None)
@@ -357,13 +456,11 @@ def main():
     )
     args = parser.parse_args()
 
-    cfg = load_config(args.config)
-    if args.epochs is not None:
-        cfg.setdefault("train", {})["epochs"] = args.epochs
-    if args.device is not None:
-        cfg.setdefault("train", {})["device"] = args.device
-    if args.resume is not None:
-        cfg.setdefault("train", {})["resume"] = args.resume
+    try:
+        overrides = _cli_config_overrides(args)
+    except ValueError as exc:
+        parser.error(str(exc))
+    cfg = load_config(args.config, overrides=overrides)
 
     reproducibility_cfg = cfg.get("reproducibility", {})
     deterministic = bool(reproducibility_cfg.get("deterministic", True))

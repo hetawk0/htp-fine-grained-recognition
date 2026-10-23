@@ -60,7 +60,127 @@ Training options include `--epochs N`, `--device auto|cpu|mps|cuda`, and
 For CUDA, install the PyTorch build appropriate for your system if the standard
 `requirements.txt` install does not provide CUDA support.
 
-Evaluate a checkpoint (using the smoke run here):
+### Direct command-line runs
+
+You can keep a YAML config as the base and override common settings directly
+from the command line. For example, this runs a one-epoch synthetic check
+without editing a config:
+
+```bash
+python scripts/train.py \
+  --config src/configs/smoke.yaml \
+  --data synthetic \
+  --arch soe_fbanet \
+  --backbone cnn_lite \
+  --epochs 1 \
+  --batch-size 8 \
+  --lr 1e-3 \
+  --device cpu \
+  --out-dir outputs/cli-smoke
+```
+
+The direct options include `--data`/`--dataset`, `--arch`/`--model`,
+`--backbone`, `--image-size`, `--epochs`, `--batch-size`, `--lr`,
+`--weight-decay`, `--pretrained`/`--no-pretrained`, `--device`, `--out-dir`,
+`--seed`, and `--resume`. `--arch` selects a Viola architecture
+(`soe_fbanet`, `soanet`, `fbanet`, or `backbone_classifier`); `--backbone`
+selects its feature extractor (`cnn_lite`, `resnet18`, `resnet50`, or `vgg16`).
+These are Viola model and training options; MedDef-specific attack options
+such as `--attack_type` and `--attack_eps` are not implemented in this
+classification pipeline.
+
+For less common settings, repeat `--set SECTION.KEY=VALUE`. Values are parsed
+as YAML, so booleans, numbers, lists, and `null` retain their types. For
+example:
+
+```bash
+python scripts/train.py \
+  --config src/configs/default.yaml \
+  --data zhang \
+  --set data.root=datasets/raw/my_dataset \
+  --set 'data.split_ratios=[0.7, 0.15, 0.15]' \
+  --set model.use_sofe=false \
+  --epochs 50 \
+  --device auto \
+  --out-dir outputs/zhang_run
+```
+
+When both `--set` and a direct option specify the same setting, the direct
+option takes precedence. Keep dataset paths and other machine-specific values
+local. `--help` lists all supported direct options.
+
+### Run examples
+
+Run a quick synthetic smoke training job (no dataset download required):
+
+```bash
+python scripts/train.py \
+  --config src/configs/smoke.yaml \
+  --device cpu
+```
+
+Try a different architecture and backbone on synthetic data. Use a distinct
+output directory for each run so checkpoints are not overwritten:
+
+```bash
+python scripts/train.py \
+  --config src/configs/smoke.yaml \
+  --arch fbanet \
+  --backbone resnet18 \
+  --epochs 2 \
+  --batch-size 8 \
+  --device cpu \
+  --out-dir outputs/fbanet-resnet18-test
+```
+
+Train on QuickDraw after downloading the house/tree/face sketches as described
+in Quick start. The downloader uses this default data directory; override
+`data.root` if you saved the files elsewhere:
+
+```bash
+python scripts/train.py \
+  --config src/configs/default.yaml \
+  --data quickdraw \
+  --arch soe_fbanet \
+  --backbone resnet18 \
+  --epochs 20 \
+  --device auto \
+  --out-dir outputs/quickdraw-resnet18
+```
+
+Train on an authorized local dataset organized in class folders or with a
+`labels.csv` manifest. Replace the root with your local dataset directory and
+choose the matching dataset layout (`zhang`, `pan`, or `bilgi`):
+
+```bash
+python scripts/train.py \
+  --config src/configs/default.yaml \
+  --data zhang \
+  --set data.root=datasets/raw/my_dataset \
+  --set 'data.split_ratios=[0.7, 0.15, 0.15]' \
+  --arch soe_fbanet \
+  --backbone resnet50 \
+  --pretrained \
+  --epochs 50 \
+  --batch-size 8 \
+  --device auto \
+  --out-dir outputs/my-zhang-run
+```
+
+To continue from a saved checkpoint, pass `--resume`. This warm-starts the
+model weights and starts a fresh training run in the selected output folder:
+
+```bash
+python scripts/train.py \
+  --config src/configs/local.yaml \
+  --arch soe_fbanet \
+  --backbone resnet50 \
+  --resume outputs/my-zhang-run/best.pt \
+  --epochs 20 \
+  --out-dir outputs/my-zhang-finetune
+```
+
+Evaluate a run using its matching dataset/model config and checkpoint path:
 
 ```bash
 python scripts/eval.py \
@@ -69,6 +189,13 @@ python scripts/eval.py \
   --split test \
   --device cpu
 ```
+
+For clinical runs, substitute the matching local config and checkpoint, for
+example `src/configs/local.yaml` and `outputs/my-zhang-run/best.pt`. The config
+must describe the same model and data protocol used to train that checkpoint.
+For repeatable comparisons across many settings, prefer checked-in YAML
+presets or the experiment-matrix runner instead of manually launching many
+CLI variations.
 
 Evaluation prints JSON to stdout. Save it locally if desired:
 
