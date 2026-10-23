@@ -1,10 +1,8 @@
 # D4b — DD fine-tune after QuickDraw backbone transfer (D1-like recipe)
 # 1) Stage A done: outputs/quickdraw_htp_pretrain/best.pt
-# 2) python scripts/transfer_backbone.py \
-#      --src outputs/quickdraw_htp_pretrain/best.pt \
-#      --dst-config src/configs/dd_train.yaml \
-#      --out outputs/htp_depression_dd_init/from_qd_backbone.pt
-# 3) Train this config (resume transferred weights).
+# 2) A project-specific transfer-backbone helper was used for the historical
+#    run and has since been removed.
+# 3) This archived config is retained as a record of the old recipe only.
 #
 # Hypothesis: QD house/tree/face stroke features transfer to HTP under the
 # champion D1 recipe (forever-freeze + micro-LR + no strong_aug + LS + f1_tau/TTA).

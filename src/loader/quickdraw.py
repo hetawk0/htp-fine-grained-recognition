@@ -56,7 +56,8 @@ class QuickDrawHTPDataset(Dataset):
             path = self.root / f"{cat}.npy"
             if not path.exists():
                 raise FileNotFoundError(
-                    f"Missing {path}. Run: python scripts/download_quickdraw.py"
+                    f"Missing {path}. Download the QuickDraw numpy_bitmap file "
+                    f"for '{cat}' and place it at this path."
                 )
             arr = np.load(path)  # [N, 784] uint8
             n = min(samples_per_class, len(arr))

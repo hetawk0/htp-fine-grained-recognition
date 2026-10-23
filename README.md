@@ -31,6 +31,60 @@ Planned tables, figures, and reporting safeguards are in
 [`docs/exp2/results_and_figure_plan.md`](docs/exp2/results_and_figure_plan.md).
 These documents describe the intended work, not completed results.
 
+## Download the Roboflow HTP dataset
+
+The Roboflow project is [`htp/htp-lewxu`](https://universe.roboflow.com/htp/htp-lewxu).
+The screenshots provided for this project show **version 3**, dated
+2023-06-08, with 589 images resized to 640×640, a CC BY 4.0 label, and
+displayed classes for house parts (door, window, wall, roof, chimney, and
+sun). The page shows two versions; version 2 has 1,026 images. Verify these
+details against the export and current terms before use. Version 3's displayed
+split is 437 train, 152 validation, and **0 test images**. Do not report its
+validation partition as a final held-out test. Check whether the dataset
+version/export lets you define a separate test split before final detector
+evaluation.
+
+The visible taxonomy does not show tree or person classes, although those
+appear in the project brief. Check the selected version's annotations before
+deciding whether it supports the intended full HTP detection task; see the
+[results and figure plan](docs/exp2/results_and_figure_plan.md#2-dataset-inventory-and-partition-tables).
+
+The download helper requires a Roboflow API key and an exact version number.
+The selected version is 3. The helper prompts for the key with hidden input
+if `ROBOFLOW_API_KEY` is not set; do not paste the key into this README, a
+committed config, or a command that will be saved in shell history.
+
+Install the optional Roboflow SDK and download a version as COCO (the default,
+convenient for sharing annotations between detector implementations):
+
+```bash
+python -m pip install roboflow
+python scripts/download_roboflow_htp.py --version 3
+```
+
+The export is saved under `datasets/roboflow_htp/` and remains local/ignored
+by Git. Choose `--format yolov8` if you specifically need a YOLOv8 export.
+Each version must use an empty output directory; this prevents accidentally
+mixing exports or overwriting a previous download. To keep versions separate,
+pass an explicit path such as:
+
+```bash
+python scripts/download_roboflow_htp.py \
+  --version 3 \
+  --format coco \
+  --output-dir datasets/roboflow_htp/version-3
+```
+
+The code snippet embedded in the Roboflow page uses `inference_sdk` to call a
+hosted inference workflow (`general-segmentation-api`) on an image. That is
+not the dataset download API and does not train a detector or export the
+annotated dataset. For a local training export, use the downloader above.
+
+The project is public, but the download API requires an API key. Create one
+in Roboflow's account settings and enter it only in the hidden prompt or
+provide it through a local `ROBOFLOW_API_KEY` environment variable. Never
+commit or send the key. This repository does not include the downloaded data.
+
 ## Repository layout
 
 ```text
@@ -42,6 +96,7 @@ src/
 scripts/       training, evaluation, smoke tests, and experiment utilities
 tests/         model and CLI regression tests
 docs/exp2/     project requirements and results/figure plan
+datasets/      local-only Roboflow and authorized HTP data (not committed)
 ```
 
 ## Setup and smoke test
